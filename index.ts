@@ -1,24 +1,35 @@
-import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { generateText } from "ai";
 import dotenv from "dotenv";
+import { aiGateway, openrouter } from "./implementations";
 
-dotenv.config({ path: ".env.local" });
+type GenerateTextResult = Awaited<ReturnType<typeof generateText>>;
 
-if (!process.env.OPENROUTER_API_KEY) {
-  throw new Error("OPENROUTER_API_KEY is not set");
-}
+dotenv.config({ path: ".env.local", quiet: true });
+
+const DEFAULT_IMPLEMENTATION = "gateway";
+const DEFAULT_PROMPT =
+  "What's a good cat name? Return only the name, no other text.";
 
 async function main() {
-  const openrouter = createOpenRouter({
-    apiKey: process.env.OPENROUTER_API_KEY,
-  });
+  const [implementation = DEFAULT_IMPLEMENTATION, prompt = DEFAULT_PROMPT] =
+    process.argv.slice(2);
 
-  const result = await generateText({
-    model: openrouter.chat("openai/gpt-4o-mini"),
-    prompt: "What's a good cat name? Return only the name, no other text.",
-  });
+  let result: GenerateTextResult;
+  switch (implementation) {
+    case "openrouter":
+      result = await openrouter(prompt);
+      break;
+    case "gateway":
+      result = await aiGateway(prompt);
+      break;
+    default:
+      throw new Error(`Implementation ${implementation} not found`);
+  }
 
+  console.log("RESULT:");
   console.log(result.text);
+  console.log("--------------------------------");
+  console.log("PROVIDER METADATA:");
   console.log(JSON.stringify(result.providerMetadata, null, 2));
 }
 
