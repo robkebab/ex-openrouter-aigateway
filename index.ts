@@ -13,12 +13,13 @@ async function main() {
     apiKey: process.env.OPENROUTER_API_KEY,
   });
 
-  const { text } = await generateText({
+  const result = await generateText({
     model: openrouter.chat("openai/gpt-4o-mini"),
     prompt: "What's a good cat name? Return only the name, no other text.",
   });
 
-  console.log(text);
+  console.log(result.text);
+  console.log(JSON.stringify(result.providerMetadata, null, 2));
 }
 
 main().catch(console.error);
